@@ -29,12 +29,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Navigate to root
-        run: cd $GITHUB_WORKSPACE
-      
       # Add changes to staging
       - name: Stage all changes
-        run: git add .
+        run: git add -A
+
+      # Debug Git Status
+      - name: Debug Git Status
+        run: git status
 
       # Run Commitizen to generate changelog
       - name: Run Commitizen to ensure proper commit message
