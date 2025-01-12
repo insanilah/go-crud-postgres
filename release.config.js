@@ -1,4 +1,5 @@
 module.exports = {
+  repositoryUrl: "https://github.com/insanilah/go-crud-postgres.git",
   branches: ["main", "staging", "dev"],
   plugins: [
     "@semantic-release/commit-analyzer",
