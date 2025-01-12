@@ -31,9 +31,8 @@ jobs:
 
       - name: Validate Commit Messages
         run: |
-          npm install -g @commitlint/cli @commitlint/config-conventional
-          git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:%s | commitlint
-
+          git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:%s | npx commitlint
+        
       # Run semantic-release
       - name: Run semantic-release
         env:
