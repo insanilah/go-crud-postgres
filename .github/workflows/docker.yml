@@ -29,19 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Fetch All Branches
-        run: git fetch --unshallow
-
-      - name: Debug Commit Range
-        run: |
-          echo "Base Branch: ${{ github.event.pull_request.base.ref }}"
-          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
-          git log origin/${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.sha }} --oneline
-
       - name: Lint Commit Messages
         run: |
-          npx commitlint --from origin/${{ github.event.pull_request.base.ref }} --to ${{ github.event.pull_request.head.sha }}
-
+          npx commitlint origin/${{ github.event.pull_request.base.ref }} -- ${{ github.event.pull_request.head.sha }}
+      
         # Run semantic-release
       - name: Run semantic-release
         env:
