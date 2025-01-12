@@ -94,8 +94,15 @@ jobs:
             echo "APP_ENV=production" >> $GITHUB_ENV
           fi
 
-      # Build and Push Docker Image
-      - name: Build and Push Docker Image
+      # Build and Push Docker Image with Semantic Version
+      - name: Build and Push Docker Image (Semantic Version)
         run: |
-          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ env.TAG }} . 
+          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ env.TAG }} .
           docker push satriagitu/go-crud-postgres:${{ env.TAG }}
+
+      # Build and Push Docker Image with 'latest' or branch-specific tag
+      - name: Build and Push Docker Image (Latest or Branch Tag)
+        if: startsWith(github.ref, 'refs/heads/')
+        run: |
+          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:latest .
+          docker push satriagitu/go-crud-postgres:latest
