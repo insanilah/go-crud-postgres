@@ -40,7 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          VERSION=$(npx semantic-release | grep 'The next release version is' | awk '{print $6}')
+          VERSION=$(npx semantic-release --dry-run 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERS: $VERSION"
 
@@ -79,21 +79,23 @@ jobs:
         run: |
           REF_NAME="${{ github.ref_name }}"
           if [[ "${{ github.ref }}" == refs/heads/dev ]]; then
-            TAG="${env.VERSION}-${REF_NAME}"
+            TAG="${VERSION}-${REF_NAME}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=development" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/staging ]]; then
-            TAG="${env.VERSION}-${REF_NAME}"
+            TAG="${VERSION}-${REF_NAME}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=staging" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
-            TAG="${env.VERSION}"
+            TAG="${VERSION}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=production" >> $GITHUB_ENV
           else
             echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
             echo "APP_ENV=dev" >> $GITHUB_ENV
           fi
+        env:
+          VERSION: ${{ env.VERSION }}
 
       - name: Show GitHub Ref and Environment Variables
         run: |
