@@ -15,26 +15,21 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      # Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Lint Commit
       - name: Lint Commit Messages
         run: |
           npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
-      
-        # Run semantic-release
+
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,18 +38,15 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-    needs: release # Menunggu job `release` selesai
+    needs: release
 
     steps:
-      # Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Cache Docker layers
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
@@ -63,25 +55,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Set environment variables based on branch/tag
       - name: Set Environment Variables
         id: get-env
         run: |
           if [[ "${{ github.ref }}" == refs/heads/dev ]]; then
-            echo "TAG=dev" >> $GITHUB_ENV
+            VERSION_TAG="v${{ github.event.release.tag_name }}-dev"
+            echo "TAG=$VERSION_TAG" >> $GITHUB_ENV
             echo "APP_ENV=development" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/staging ]]; then
-            echo "TAG=staging" >> $GITHUB_ENV
+            VERSION_TAG="v${{ github.event.release.tag_name }}-staging"
+            echo "TAG=$VERSION_TAG" >> $GITHUB_ENV
             echo "APP_ENV=staging" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
-            echo "TAG=latest" >> $GITHUB_ENV
+            VERSION_TAG="v${{ github.event.release.tag_name }}-latest"
+            echo "TAG=$VERSION_TAG" >> $GITHUB_ENV
             echo "APP_ENV=production" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/tags/v*.*.*-beta ]]; then
             echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
@@ -94,7 +87,7 @@ jobs:
             echo "APP_ENV=production" >> $GITHUB_ENV
           fi
 
-      # Build and Push Docker Image with Semantic Version
+      # Build and Push Docker Image with Semantic Version (from release tag)
       - name: Build and Push Docker Image (Semantic Version)
         run: |
           docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ env.TAG }} .
@@ -104,5 +97,5 @@ jobs:
       - name: Build and Push Docker Image (Latest or Branch Tag)
         if: startsWith(github.ref, 'refs/heads/')
         run: |
-          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:latest .
-          docker push satriagitu/go-crud-postgres:latest
+          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ github.ref_name }} .
+          docker push satriagitu/go-crud-postgres:${{ github.ref_name }}
