@@ -40,8 +40,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          VERSION=$(npx semantic-release | grep 'Published release ' | awk '{print $2}')
+          VERSION=$(npx semantic-release | grep 'The next release version is' | awk '{print $6}')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERS: $VERSION"
 
   docker:
     runs-on: ubuntu-latest
@@ -78,15 +79,15 @@ jobs:
         run: |
           REF_NAME="${{ github.ref_name }}"
           if [[ "${{ github.ref }}" == refs/heads/dev ]]; then
-            TAG="${VERSION}-${REF_NAME}"
+            TAG="${env.VERSION}-${REF_NAME}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=development" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/staging ]]; then
-            TAG="${VERSION}-${REF_NAME}"
+            TAG="${env.VERSION}-${REF_NAME}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=staging" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
-            TAG="${VERSION}"
+            TAG="${env.VERSION}"
             echo "TAG=$TAG" >> $GITHUB_ENV
             echo "APP_ENV=production" >> $GITHUB_ENV
           else
