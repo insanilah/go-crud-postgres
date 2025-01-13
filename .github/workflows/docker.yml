@@ -75,28 +75,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Set environment variables based on branch/tag
+      # Set environment variables for tags
       - name: Set Environment Variables
-        id: get-env
+        id: set-tags
         run: |
           VERSION=${{ needs.release.outputs.version }}
           REF_NAME="${{ github.ref_name }}"
+          
           if [[ "${{ github.ref }}" == refs/heads/dev ]]; then
-            TAG="v$VERSION-${REF_NAME}"
-            echo "TAG=$TAG" >> $GITHUB_ENV
-            echo "APP_ENV=development" >> $GITHUB_ENV
+            TAG="v$VERSION-dev.${{ github.run_number }}"
+            LATEST_TAG="dev-latest"
+            APP_ENV="development"
           elif [[ "${{ github.ref }}" == refs/heads/staging ]]; then
-            TAG="v$VERSION-${REF_NAME}"
-            echo "TAG=$TAG" >> $GITHUB_ENV
-            echo "APP_ENV=staging" >> $GITHUB_ENV
+            TAG="v$VERSION-beta.${{ github.run_number }}"
+            LATEST_TAG="beta-latest"
+            APP_ENV="staging"
           elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
             TAG="v$VERSION"
-            echo "TAG=$TAG" >> $GITHUB_ENV
-            echo "APP_ENV=production" >> $GITHUB_ENV
+            LATEST_TAG="latest"
+            APP_ENV="production"
           else
-            echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
-            echo "APP_ENV=dev" >> $GITHUB_ENV
+            TAG="v$VERSION-unknown"
+            LATEST_TAG="unknown-latest"
+            APP_ENV="unknown"
           fi
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "APP_ENV=$APP_ENV" >> $GITHUB_ENV
 
       # Show GitHub Ref and Environment Variables
       - name: Show GitHub Ref and Environment Variables
@@ -106,15 +112,15 @@ jobs:
           echo "Environment Variables: "
           cat $GITHUB_ENV
 
-      # Build and Push Docker Image with Semantic Version
+      # Build dan push image dengan versi spesifik
       - name: Build and Push Docker Image (Semantic Version)
         run: |
           docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ env.TAG }} .
           docker push satriagitu/go-crud-postgres:${{ env.TAG }}
 
-      # Build and Push Docker Image with 'latest' or branch-specific tag
-      - name: Build and Push Docker Image (Latest or Branch Tag)
-        if: startsWith(github.ref, 'refs/heads/')
+      # Build dan push image dengan tag "latest" sesuai lingkungan
+      - name: Build and Push Docker Image (Latest Tag)
         run: |
-          docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:latest .
-          docker push satriagitu/go-crud-postgres:latest
+          docker tag satriagitu/go-crud-postgres:${{ env.TAG }} satriagitu/go-crud-postgres:${{ env.LATEST_TAG }}
+          docker push satriagitu/go-crud-postgres:${{ env.LATEST_TAG }}
+
