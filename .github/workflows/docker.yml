@@ -40,7 +40,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          VERSION=$(npx semantic-release | grep 'The new version is' | awk '{print $5}')
+          npx semantic-release
+          VERSION=v.1
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
   docker:
