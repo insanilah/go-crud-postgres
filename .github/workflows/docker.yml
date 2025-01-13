@@ -14,6 +14,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-output.outputs.version }}
     steps:
       # Checkout repository
       - name: Checkout Code
@@ -36,7 +38,7 @@ jobs:
       
         # Run semantic-release
       - name: Run semantic-release
-        id: set-version
+        id: set-output
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -44,7 +46,8 @@ jobs:
           VERSION=$(npx semantic-release --dry-run 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERS: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_ENV
+          cat $GITHUB_ENV
 
   docker:
     runs-on: ubuntu-latest
@@ -96,8 +99,6 @@ jobs:
             echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
             echo "APP_ENV=dev" >> $GITHUB_ENV
           fi
-        env:
-          VERSION: ${{ env.VERSION }}
 
       - name: Show GitHub Ref and Environment Variables
         run: |
