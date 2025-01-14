@@ -1,5 +1,5 @@
 # Gunakan image Go resmi sebagai base image untuk build
-FROM golang:1.20 AS build
+FROM golang:1.23 AS build
 
 # Setel direktori kerja
 WORKDIR /app

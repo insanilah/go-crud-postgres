@@ -1,0 +1,22 @@
+image:
+  repository: satriagitu/go-crud-postgres
+  tag: "latest"
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30080 # Pilih port antara 30000-32767
+
+env:
+  fromSecret: true # Gunakan secret jika true
+  secretName: go-crud-secret
+
+serviceAccount:
+  create: true
+  name: ""
+
+ingress:
+  enabled: false
+
+autoscaling:
+  enabled: false
