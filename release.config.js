@@ -1,6 +1,10 @@
 module.exports = {
   repositoryUrl: "https://github.com/insanilah/go-crud-postgres.git",
-  branches: ["main", "staging", "dev"],
+  branches: [
+    { name: 'main' },         // Branch utama untuk rilis stabil
+    { name: 'dev', prerelease: true }, // Branch development untuk pre-release
+    { name: 'staging', prerelease: true }, // Branch staging untuk pre-release
+  ],
   plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
