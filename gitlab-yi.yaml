@@ -1,0 +1,36 @@
+stages:
+  - release
+  - docker
+
+variables:
+  DOCKER_USERNAME: $CI_REGISTRY_USER
+  DOCKER_PASSWORD: $CI_REGISTRY_PASSWORD
+  # BRANCH: $CI_COMMIT_REF_NAME
+  DOCKER_IMAGE: "satria.gitu4/go-crud-postgres"
+
+release:
+  stage: release
+  script:
+    - git fetch --tags
+    - |
+      if [[ "$BRANCH" == "dev" ]]; then
+        LAST_TAG=$(git tag -l "v*-dev" | sort -V | tail -n 1)
+        VERSION=$(echo $LAST_TAG | sed 's/-dev//')-dev
+      elif [[ "$BRANCH" == "staging" ]]; then
+        LAST_TAG=$(git tag -l "v*-beta" | sort -V | tail -n 1)
+        VERSION=$(echo $LAST_TAG | sed 's/-beta//')-beta
+      elif [[ "$BRANCH" == "main" ]]; then
+        LAST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
+        VERSION=$(echo $LAST_TAG | sed 's/v//')
+      fi
+      echo "VERSION=$VERSION"
+
+docker:
+  stage: docker
+  script:
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION .
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION
+  only:
+    - dev
+    - staging
+    - main
