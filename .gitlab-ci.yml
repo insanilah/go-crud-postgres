@@ -2,34 +2,15 @@ image: docker:latest
 
 services:
   - docker:dind
-
-variables:
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
-  IMAGE_NAME: satriagitu/go-crud-postgres
-  IMAGE_TAG: latest
-
-stages:
-  - build
-  - push
-
-before_script:
-  - echo "Logging in to Docker Hub"
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
-build_image:
+  
+build:
+  image: docker:20.10.16
   stage: build
+  services:
+    - docker:20.10.16-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
-    - echo "Building Docker image"
-    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:$(echo $CI_COMMIT_SHA | cut -c1-7)
-
-push_image:
-  stage: push
-  script:
-    - echo "Pushing Docker image to Docker Hub"
-    - docker push $IMAGE_NAME:$IMAGE_TAG
-    - docker push $IMAGE_NAME:$(echo $CI_COMMIT_SHA | cut -c1-7)
-  only:
-    - main  # Hanya jalankan push jika commit ada di branch main
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
