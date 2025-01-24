@@ -1,4 +1,4 @@
-image: alpine:latest
+image: docker:latest
 
 services:
   - docker:dind
@@ -16,8 +16,7 @@ stages:
 
 before_script:
   - echo "Installing Docker Credential Helper"
-  - apk add --no-cache docker-credential-secretservice
-  - docker-credential-secretservice configure
+  - apt-get update && apt-get install -y docker-credential-secretservice
   - echo "Logging in to Docker Hub"
   - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
 
