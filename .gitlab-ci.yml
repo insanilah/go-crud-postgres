@@ -3,7 +3,7 @@ stages:
   - push
 
 variables:
-  DOCKER_IMAGE: "username/repository"
+  DOCKER_IMAGE: "satriagitu/go-crud-postgres"
   TAG: $CI_COMMIT_REF_NAME
 
 build-docker:
