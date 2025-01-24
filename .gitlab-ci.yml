@@ -2,6 +2,10 @@ stages:
   - release
   - docker
 
+image: docker:20.10
+services:
+  - docker:20.10-dind
+
 variables:
   DOCKER_USERNAME: $CI_REGISTRY_USER
   DOCKER_PASSWORD: $CI_REGISTRY_PASSWORD
