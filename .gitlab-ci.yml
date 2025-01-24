@@ -15,11 +15,11 @@ stages:
   - push
 
 before_script:
+  - echo "Installing Docker Credential Helper"
+  - apt-get update && apt-get install -y docker-credential-secretservice
   - echo "Logging in to Docker Hub"
-  - echo "Docker Hub Username $DOCKER_HUB_USER"
-  - echo "Docker Hub Password $DOCKER_HUB_PASSWORD"
   - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-
+  
 build_image:
   stage: build
   script:
