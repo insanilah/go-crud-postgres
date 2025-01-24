@@ -16,7 +16,7 @@ stages:
 
 before_script:
   - echo "Logging in to Docker Hub"
-  - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
+  - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
 
 build_image:
   stage: build
