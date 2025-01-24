@@ -39,11 +39,15 @@ release:
 
       echo "VERSION=$VERSION" >> $CI_PROJECT_DIR/.env
       echo "LATEST=$LATEST" >> $CI_PROJECT_DIR/.env
-
-docker:
-  stage: docker
-  script:
     - source $CI_PROJECT_DIR/.env
+    - |
+      if [[ -z "$VERSION" || -z "$LATEST" ]]; then
+        echo "Error: VERSION or LATEST is not set properly."
+        exit 1
+      fi
+    - echo "Building Docker image with tags:"
+    - echo "$CI_REGISTRY/$CI_PROJECT_PATH:$VERSION"
+    - echo "$CI_REGISTRY/$CI_PROJECT_PATH:$LATEST"
     - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION -t $CI_REGISTRY/$CI_PROJECT_PATH:$LATEST .
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$LATEST
