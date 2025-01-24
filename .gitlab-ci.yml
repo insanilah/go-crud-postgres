@@ -10,7 +10,7 @@ variables:
   DOCKER_REGISTRY: docker.io
   DOCKER_USERNAME: $DOCKER_USERNAME
   DOCKER_PASSWORD: $DOCKER_PASSWORD
-  DOCKER_IMAGE: "satria.gitu4/go-crud-postgres"
+  DOCKER_IMAGE: "satriagitu/go-crud-postgres"
 
 before_script:
   - apk add --no-cache git
