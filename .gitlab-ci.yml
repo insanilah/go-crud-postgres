@@ -1,58 +1,35 @@
 stages:
-  - release
-  - docker
-
-image: docker:20.10
-services:
-  - docker:20.10-dind
+  - build
+  - push
 
 variables:
-  DOCKER_REGISTRY: docker.io
-  DOCKER_USERNAME: $DOCKER_USERNAME
-  DOCKER_PASSWORD: $DOCKER_PASSWORD
-  DOCKER_IMAGE: "satriagitu/go-crud-postgres"
+  DOCKER_IMAGE: "username/repository"
+  TAG: $CI_COMMIT_REF_NAME
 
-before_script:
-  - apk add --no-cache git
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY
-
-release:
-  stage: release
+build-docker:
+  stage: build
+  image: docker:20.10.24
+  services:
+    - docker:20.10.24-dind
   script:
-    - git fetch --tags
-    - |
-      LAST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
-      if [[ -z "$LAST_TAG" ]]; then
-        BASE_VERSION="v1.0.0"
-      else
-        BASE_VERSION=$(echo $LAST_TAG | awk -F. '{print $1"."$2"."$3+1}')
-      fi
+    - echo "Building Docker image..."
+    - docker build -t $DOCKER_IMAGE:$TAG .
+    - docker tag $DOCKER_IMAGE:$TAG $DOCKER_IMAGE:latest
+  only:
+    - dev
+    - staging
+    - main
 
-      if [[ "$CI_COMMIT_REF_NAME" == "dev" ]]; then
-        VERSION="${BASE_VERSION}-dev"
-        LATEST="dev-latest"
-      elif [[ "$CI_COMMIT_REF_NAME" == "staging" ]]; then
-        VERSION="${BASE_VERSION}-beta"
-        LATEST="beta-latest"
-      elif [[ "$CI_COMMIT_REF_NAME" == "main" ]]; then
-        VERSION="$BASE_VERSION"
-        LATEST="latest"
-      fi
-
-      echo "VERSION=$VERSION" >> $CI_PROJECT_DIR/.env
-      echo "LATEST=$LATEST" >> $CI_PROJECT_DIR/.env
-    - source $CI_PROJECT_DIR/.env
-    - |
-      if [[ -z "$VERSION" || -z "$LATEST" ]]; then
-        echo "Error: VERSION or LATEST is not set properly."
-        exit 1
-      fi
-    - echo "Building Docker image with tags:"
-    - echo "$CI_REGISTRY/$CI_PROJECT_PATH:$VERSION"
-    - echo "$CI_REGISTRY/$CI_PROJECT_PATH:$LATEST"
-    - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE:$VERSION -t $DOCKER_REGISTRY/$DOCKER_IMAGE:$LATEST .
-    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE:$VERSION
-    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE:$LATEST
+push-docker:
+  stage: push
+  image: docker:20.10.24
+  services:
+    - docker:20.10.24-dind
+  script:
+    - echo "Pushing Docker image to Docker Hub..."
+    - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+    - docker push $DOCKER_IMAGE:$TAG
+    - docker push $DOCKER_IMAGE:latest
   only:
     - dev
     - staging
