@@ -1,38 +1,35 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_NAME: satriagitu/go-crud-postgres
+  IMAGE_TAG: latest
+
 stages:
   - build
   - push
 
-variables:
-  DOCKER_IMAGE: "satriagitu/go-crud-postgres"
-  TAG: $CI_COMMIT_REF_NAME
+before_script:
+  - echo "Logging in to Docker Hub"
+  - docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
 
-build-docker:
+build_image:
   stage: build
-  image: docker:20.10.24
-  services:
-    - docker:20.10.24-dind
   script:
-    - echo "Building Docker image..."
-    - docker build -t $DOCKER_IMAGE:$TAG .
-    - docker tag $DOCKER_IMAGE:$TAG $DOCKER_IMAGE:latest
-  only:
-    - dev
-    - staging
-    - main
+    - echo "Building Docker image"
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:$(echo $CI_COMMIT_SHA | cut -c1-7)
 
-push-docker:
+push_image:
   stage: push
-  image: docker:20.10.24
-  services:
-    - docker:20.10.24-dind
   script:
-    - echo "Pushing Docker image to Docker Hub..."
-    - echo "Username $DOCKER_USERNAME"
-    - echo "Password $DOCKER_PASSWORD"
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    - docker push $DOCKER_IMAGE:$TAG
-    - docker push $DOCKER_IMAGE:latest
+    - echo "Pushing Docker image to Docker Hub"
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker push $IMAGE_NAME:$(echo $CI_COMMIT_SHA | cut -c1-7)
   only:
-    - dev
-    - staging
-    - main
+    - main  # Hanya jalankan push jika commit ada di branch main
