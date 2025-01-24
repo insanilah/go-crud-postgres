@@ -16,7 +16,7 @@ stages:
 
 before_script:
   - echo "Logging in to Docker Hub"
-  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 build_image:
   stage: build
