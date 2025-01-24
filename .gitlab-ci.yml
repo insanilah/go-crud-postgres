@@ -27,7 +27,7 @@ push-docker:
     - docker:20.10.24-dind
   script:
     - echo "Pushing Docker image to Docker Hub..."
-    - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     - docker push $DOCKER_IMAGE:$TAG
     - docker push $DOCKER_IMAGE:latest
   only:
