@@ -9,21 +9,23 @@ services:
 variables:
   DOCKER_USERNAME: $CI_REGISTRY_USER
   DOCKER_PASSWORD: $CI_REGISTRY_PASSWORD
-  # BRANCH: $CI_COMMIT_REF_NAME
   DOCKER_IMAGE: "satria.gitu4/go-crud-postgres"
+
+before_script:
+  - apk add --no-cache git
 
 release:
   stage: release
   script:
     - git fetch --tags
     - |
-      if [[ "$BRANCH" == "dev" ]]; then
+      if [[ "$CI_COMMIT_REF_NAME" == "dev" ]]; then
         LAST_TAG=$(git tag -l "v*-dev" | sort -V | tail -n 1)
         VERSION=$(echo $LAST_TAG | sed 's/-dev//')-dev
-      elif [[ "$BRANCH" == "staging" ]]; then
+      elif [[ "$CI_COMMIT_REF_NAME" == "staging" ]]; then
         LAST_TAG=$(git tag -l "v*-beta" | sort -V | tail -n 1)
         VERSION=$(echo $LAST_TAG | sed 's/-beta//')-beta
-      elif [[ "$BRANCH" == "main" ]]; then
+      elif [[ "$CI_COMMIT_REF_NAME" == "main" ]]; then
         LAST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
         VERSION=$(echo $LAST_TAG | sed 's/v//')
       fi
