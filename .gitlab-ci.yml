@@ -19,23 +19,34 @@ release:
   script:
     - git fetch --tags
     - |
-      if [[ "$CI_COMMIT_REF_NAME" == "dev" ]]; then
-        LAST_TAG=$(git tag -l "v*-dev" | sort -V | tail -n 1)
-        VERSION=$(echo $LAST_TAG | sed 's/-dev//')-dev
-      elif [[ "$CI_COMMIT_REF_NAME" == "staging" ]]; then
-        LAST_TAG=$(git tag -l "v*-beta" | sort -V | tail -n 1)
-        VERSION=$(echo $LAST_TAG | sed 's/-beta//')-beta
-      elif [[ "$CI_COMMIT_REF_NAME" == "main" ]]; then
-        LAST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
-        VERSION=$(echo $LAST_TAG | sed 's/v//')
+      LAST_TAG=$(git tag -l "v*" | sort -V | tail -n 1)
+      if [[ -z "$LAST_TAG" ]]; then
+        BASE_VERSION="v1.0.0"
+      else
+        BASE_VERSION=$(echo $LAST_TAG | awk -F. '{print $1"."$2"."$3+1}')
       fi
-      echo "VERSION=$VERSION"
+
+      if [[ "$CI_COMMIT_REF_NAME" == "dev" ]]; then
+        VERSION="${BASE_VERSION}-dev"
+        LATEST="dev-latest"
+      elif [[ "$CI_COMMIT_REF_NAME" == "staging" ]]; then
+        VERSION="${BASE_VERSION}-beta"
+        LATEST="beta-latest"
+      elif [[ "$CI_COMMIT_REF_NAME" == "main" ]]; then
+        VERSION="$BASE_VERSION"
+        LATEST="latest"
+      fi
+
+      echo "VERSION=$VERSION" >> $CI_PROJECT_DIR/.env
+      echo "LATEST=$LATEST" >> $CI_PROJECT_DIR/.env
 
 docker:
   stage: docker
   script:
-    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION .
+    - source $CI_PROJECT_DIR/.env
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION -t $CI_REGISTRY/$CI_PROJECT_PATH:$LATEST .
     - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$VERSION
+    - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$LATEST
   only:
     - dev
     - staging
