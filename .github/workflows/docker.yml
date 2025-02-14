@@ -125,3 +125,24 @@ jobs:
           docker tag satriagitu/go-crud-postgres:${{ env.TAG }} satriagitu/go-crud-postgres:${{ env.LATEST_TAG }}
           docker push satriagitu/go-crud-postgres:${{ env.LATEST_TAG }}
 
+  update-argocd:
+    runs-on: ubuntu-latest
+    needs: docker  # Menunggu proses build dan push Docker selesai
+    steps:
+      - name: Checkout Argo CD Config Repository
+        uses: actions/checkout@v3
+        with:
+          repository: insanilah/go-crud-postgres-argocd-config
+          token: ${{ secrets.ARGOCD_REPO_TOKEN }}
+
+      - name: Update Image Version in ArgoCD Config
+        run: |
+          sed -i 's|image: satriagitu/go-crud-postgres:.*|image: satriagitu/go-crud-postgres:${{ env.TAG }}|' application.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add application.yaml
+          git commit -m "Update image version to ${{ env.TAG }}"
+          git push
