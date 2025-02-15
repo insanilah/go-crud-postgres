@@ -49,7 +49,7 @@ jobs:
             fi
             echo "version=$VERSION" >> $GITHUB_ENV
             echo "::set-output name=version::$VERSION"
-            npx semantic-release    
+            npx semantic-release
 
   docker:
     runs-on: ubuntu-latest
@@ -141,12 +141,16 @@ jobs:
 
       - name: Update Image Version in ArgoCD Config
         run: |
-          sed -i 's|image: satriagitu/go-crud-postgres:.*|image: satriagitu/go-crud-postgres:${{ env.TAG }}|' application.yaml
+          sed -i 's|image: satriagitu/go-crud-postgres:.*|image: satriagitu/go-crud-postgres:${{ env.TAG }}|' dev/deployment.yaml
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add application.yaml
-          git commit -m "Update image version to ${{ env.TAG }}"
-          git push
+          git add dev/deployment.yaml
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update image version to ${{ env.TAG }}"
+            git push
+          fi
