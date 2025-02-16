@@ -14,4 +14,4 @@ curl -X POST http://localhost:8080/users -d '{"username": "john_doe", "email": "
 curl http://localhost:8080/users
 ```
 
-#### Other Info 4
+#### Other Info 5
