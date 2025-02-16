@@ -17,66 +17,53 @@ jobs:
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
-      # Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Lint Commit
       - name: Lint Commit Messages
         run: |
-          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
-      
-      # Run semantic-release and set output
+          npx commitlint --from $(git rev-list --max-parents=0 HEAD) --to HEAD
+
       - name: Run semantic-release
         id: set-version
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          VERSION=$(npx semantic-release --dry-run 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+')
+          VERSION=$(npx semantic-release --dry-run | grep -Eo 'The next release version is [0-9]+\.[0-9]+\.[0-9]+' | awk '{print $NF}')
+          if [[ -z "$VERSION" ]]; then
+            echo "No new version detected. Exiting..."
+            exit 1
+          fi
           echo "version=$VERSION" >> $GITHUB_ENV
           echo "::set-output name=version::$VERSION"
           npx semantic-release
 
   docker:
     runs-on: ubuntu-latest
-    needs: release # Menunggu job `release` selesai
+    needs: release
+    outputs:
+      tag: ${{ steps.set-tags.outputs.tag }}
     steps:
-      # Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Cache Docker layers
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      # Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Set environment variables for tags
       - name: Set Environment Variables
         id: set-tags
         run: |
@@ -102,10 +89,10 @@ jobs:
           fi
 
           echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "APP_ENV=$APP_ENV" >> $GITHUB_ENV
 
-      # Show GitHub Ref and Environment Variables
       - name: Show GitHub Ref and Environment Variables
         run: |
           echo "GitHub Ref: $GITHUB_REF"
@@ -113,13 +100,11 @@ jobs:
           echo "Environment Variables: "
           cat $GITHUB_ENV
 
-      # Build dan push image dengan versi spesifik
       - name: Build and Push Docker Image (Semantic Version)
         run: |
           docker build --build-arg ENV=${{ env.APP_ENV }} -t satriagitu/go-crud-postgres:${{ env.TAG }} .
           docker push satriagitu/go-crud-postgres:${{ env.TAG }}
 
-      # Build dan push image dengan tag "latest" sesuai lingkungan
       - name: Build and Push Docker Image (Latest Tag)
         run: |
           docker tag satriagitu/go-crud-postgres:${{ env.TAG }} satriagitu/go-crud-postgres:${{ env.LATEST_TAG }}
@@ -127,7 +112,9 @@ jobs:
 
   update-argocd:
     runs-on: ubuntu-latest
-    needs: docker  # Menunggu proses build dan push Docker selesai
+    needs: docker
+    env:
+      TAG: ${{ needs.docker.outputs.tag }}
     steps:
       - name: Checkout Argo CD Config Repository
         uses: actions/checkout@v3
@@ -137,12 +124,17 @@ jobs:
 
       - name: Update Image Version in ArgoCD Config
         run: |
-          sed -i 's|image: satriagitu/go-crud-postgres:.*|image: satriagitu/go-crud-postgres:${{ env.TAG }}|' application.yaml
+          echo "TAG=${{ env.TAG }}"
+          sed -i 's|image: satriagitu/go-crud-postgres:.*|image: satriagitu/go-crud-postgres:${{ env.TAG }}|' dev/deployment.yaml
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add application.yaml
-          git commit -m "Update image version to ${{ env.TAG }}"
-          git push
+          git add dev/deployment.yaml
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update image version to ${{ env.TAG }}"
+            git push
+          fi
