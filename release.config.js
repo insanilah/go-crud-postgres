@@ -4,6 +4,10 @@ module.exports = {
     { name: "main" }, // Branch utama (rilis stabil)
     { name: "staging", prerelease: "beta" }, // Branch staging → vX.Y.Z-beta.N
     { name: "dev", prerelease: "dev" }, // Branch dev → vX.Y.Z-dev.N
+
+    // { name: "main" }, 
+    // { name: "staging", channel: "beta", prerelease: "beta" }, 
+    // { name: "dev", channel: "dev", prerelease: "dev" } 
   ],
   plugins: [
     "@semantic-release/commit-analyzer",
