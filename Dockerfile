@@ -14,7 +14,7 @@ RUN go mod tidy
 RUN go build -o go-crud-postgres .
 
 # Gunakan image ringan untuk menjalankan aplikasi
-FROM debian:bookworm-slim
+# FROM debian:bullseye-slim
 
 # ARG untuk environment
 ARG ENV=production
