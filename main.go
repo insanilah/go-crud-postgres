@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -22,38 +19,38 @@ type User struct {
 	Email    string `json:"email"`
 }
 
-func init() {
-	errLoad := godotenv.Load()
-	if errLoad != nil {
-		log.Fatalf("Error loading .env file")
-	}
+// func init() {
+// 	errLoad := godotenv.Load()
+// 	if errLoad != nil {
+// 		log.Fatalf("Error loading .env file")
+// 	}
 
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
+// 	dbHost := os.Getenv("DB_HOST")
+// 	dbPort := os.Getenv("DB_PORT")
+// 	dbUser := os.Getenv("DB_USER")
+// 	dbPassword := os.Getenv("DB_PASSWORD")
+// 	dbName := os.Getenv("DB_NAME")
 
-	// Gunakan nilai default jika DB_PORT kosong
-	if dbPort == "" {
-		dbPort = "5432"
-	}
+// 	// Gunakan nilai default jika DB_PORT kosong
+// 	if dbPort == "" {
+// 		dbPort = "5432"
+// 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		dbHost, dbUser, dbPassword, dbName, dbPort)
+// 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+// 		dbHost, dbUser, dbPassword, dbName, dbPort)
 
-	fmt.Println("DSN:", dsn) // Debugging string koneksi
+// 	fmt.Println("DSN:", dsn) // Debugging string koneksi
 
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("Gagal koneksi ke database: %v", err)
-	}
+// 	var err error
+// 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// 	if err != nil {
+// 		log.Fatalf("Gagal koneksi ke database: %v", err)
+// 	}
 
-	if err := db.AutoMigrate(&User{}); err != nil {
-		log.Fatalf("Gagal melakukan migrasi: %v", err)
-	}
-}
+// 	if err := db.AutoMigrate(&User{}); err != nil {
+// 		log.Fatalf("Gagal melakukan migrasi: %v", err)
+// 	}
+// }
 
 // Create User
 func createUser(c *gin.Context) {
