@@ -1,5 +1,5 @@
-# Gunakan image Go resmi sebagai base image untuk build
-FROM golang:1.23 AS build
+# Gunakan image Go resmi berbasis Alpine untuk build
+FROM golang:1.23-alpine AS build
 
 # Setel direktori kerja
 WORKDIR /app
@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy semua file Go ke dalam container
 COPY . .
 
-# Install dependencies
+# Install dependencies untuk build
 RUN go mod tidy
 
 # Build aplikasi Go
@@ -20,12 +20,12 @@ FROM alpine:latest
 ARG ENV=production
 ENV APP_ENV=${ENV}
 
-# Install dependencies yang dibutuhkan
-RUN apt-get update && apt-get install -y \
+# Install dependencies yang dibutuhkan menggunakan apk (untuk Alpine)
+RUN apk update && apk add --no-cache \
     ca-certificates \
-    libpq-dev \
+    libpq \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/cache/apk/*
 
 # Tambahkan metadata
 LABEL maintainer="satria.gitu4@gmail.com"
