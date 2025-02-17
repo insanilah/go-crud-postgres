@@ -14,7 +14,7 @@ RUN go mod tidy
 RUN go build -o go-crud-postgres .
 
 # Gunakan image ringan untuk menjalankan aplikasi
-# FROM debian:bullseye-slim
+FROM golang:1.23-buster
 
 # ARG untuk environment
 ARG ENV=production
